@@ -26,17 +26,18 @@ var FreeResponseForm = React.createClass({
 	}
 });
 
-var CheckResponseForm = React.createClass({
-	displayName: 'CheckResponseForm',
+var ChoiceResponseForm = React.createClass({
+	displayName: 'ChoiceResponseForm',
 
 	render: function render() {
+		var choiceType = this.props.choiceType;
 		var choices = [];
 		this.props.choices.forEach(function (choice) {
 			choices.push(React.createElement(
 				'label',
 				null,
-				choice.label,
-				React.createElement('input', { type: 'checkbox', name: choice.name })
+				choice,
+				React.createElement('input', { type: choiceType, name: 'choice' })
 			));
 		});
 		return React.createElement(
@@ -75,7 +76,9 @@ var Question = React.createClass({
 		if (this.props.type === 'free') {
 			responseForm = React.createElement(FreeResponseForm, null);
 		} else if (this.props.type === 'check') {
-			responseForm = React.createElement(CheckResponseForm, null);
+			responseForm = React.createElement(ChoiceResponseForm, { choiceType: 'checkbox', choices: this.props.choices });
+		} else if (this.props.type === 'select') {
+			responseForm = React.createElement(ChoiceResponseForm, { choiceType: 'radio', choices: this.props.choices });
 		} else if (this.props.type === 'locale') {
 			responseForm = React.createElement(LocaleForm, null);
 		};
@@ -96,11 +99,14 @@ var QuestionContainer = React.createClass({
 	displayName: 'QuestionContainer',
 
 	render: function render() {
+		var questions = [];
+		this.props.questions.forEach(function (question) {
+			questions.push(React.createElement(Question, { id: question.id, type: question.type, body: question.body, choices: question.choices ? question.choices : null }));
+		});
 		return React.createElement(
 			'div',
 			{ className: 'questionContainer' },
-			React.createElement(Question, null),
-			React.createElement(ResponseForm, null)
+			questions
 		);
 	}
 });
@@ -117,7 +123,7 @@ var Survey = React.createClass({
 				null,
 				'Survey'
 			),
-			React.createElement(QuestionContainer, null)
+			React.createElement(QuestionContainer, { questions: this.props.questions })
 		);
 	}
 });
@@ -198,4 +204,4 @@ var SURVEY_QUESTIONS = [{
 	body: 'What do you wish you went out and did more?'
 }];
 
-React.render(React.createElement(Survey, null), document.body);
+React.render(React.createElement(Survey, { questions: SURVEY_QUESTIONS }), document.body);

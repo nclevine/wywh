@@ -20,11 +20,12 @@ var FreeResponseForm = React.createClass({
 	}
 });
 
-var CheckResponseForm = React.createClass({
+var ChoiceResponseForm = React.createClass({
 	render: function(){
+		var choiceType = this.props.choiceType;
 		var choices = [];
 		this.props.choices.forEach(function(choice){
-			choices.push(<label>{choice.label}<input type='checkbox' name={choice.name} /></label>);
+			choices.push(<label>{choice}<input type={choiceType} name='choice' /></label>);
 		});
 		return (
 			<form className='checkResponseForm'>
@@ -58,7 +59,9 @@ var Question = React.createClass({
 		if (this.props.type === 'free') {
 			responseForm = <FreeResponseForm />
 		} else if (this.props.type === 'check') {
-			responseForm = <CheckResponseForm />
+			responseForm = <ChoiceResponseForm choiceType='checkbox' choices={this.props.choices} />
+		} else if (this.props.type === 'select') {
+			responseForm = <ChoiceResponseForm choiceType='radio' choices={this.props.choices} />
 		} else if (this.props.type === 'locale') {
 			responseForm = <LocaleForm />
 		};
@@ -73,10 +76,13 @@ var Question = React.createClass({
 
 var QuestionContainer = React.createClass({
 	render: function(){
+		var questions = [];
+		this.props.questions.forEach(function(question){
+			questions.push(<Question id={question.id} type={question.type} body={question.body} choices={question.choices ? question.choices : null} />)
+		});
 		return (
 			<div className='questionContainer'>
-				<Question />
-				<ResponseForm />
+				{questions}
 			</div>
 		);
 	}
@@ -87,7 +93,7 @@ var Survey = React.createClass({
 		return (
 			<div className='survey'>
 				<h1>Survey</h1>
-				<QuestionContainer />
+				<QuestionContainer questions={this.props.questions}/>
 			</div>
 		);
 	}
@@ -263,6 +269,6 @@ var SURVEY_QUESTIONS = [
 ];
 
 React.render(
-	<Survey />,
+	<Survey questions={SURVEY_QUESTIONS}/>,
 	document.body
 );
