@@ -53,6 +53,20 @@ var LocaleForm = React.createClass({
 	}
 });
 
+var NeighborhoodRecommendationForm = React.createClass({
+	render: function(){
+		var hoods = this.state.hoods.map(function(hood){
+			return <LocaleForm neighborhood={hood} />
+		});
+		return (
+			<div className='hoodRecForm'>
+				<ChoiceResponseForm choiceType='checkbox' choices={NEIGHBORHOODS} />
+				{hoods}
+			</div>
+		);
+	}
+});
+
 var Question = React.createClass({
 	render: function(){
 		var responseForm = null;
