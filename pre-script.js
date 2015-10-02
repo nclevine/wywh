@@ -1,5 +1,5 @@
 var UserForm = React.createClass({
-	render: function(){
+	render: function() {
 		return (
 			<form className='userForm'>
 				<input type='text' name='name' ref='name' placeholder='name' />
@@ -11,7 +11,7 @@ var UserForm = React.createClass({
 });
 
 var FreeResponseForm = React.createClass({
-	render: function(){
+	render: function() {
 		return (
 			<form className='freeResponseForm'>
 				<textarea name='response' ref='response' />
@@ -21,11 +21,11 @@ var FreeResponseForm = React.createClass({
 });
 
 var ChoiceResponseForm = React.createClass({
-	render: function(){
+	render: function() {
 		var choiceType = this.props.choiceType;
 		var choices = [];
-		this.props.choices.forEach(function(choice){
-			choices.push(<label>{choice}<input type={choiceType} name='choice' /></label>);
+		this.props.choices.forEach(function(choice, i){
+			choices.push(<label key={i}>{choice}<input type={choiceType} name='choice' /></label>);
 		});
 		return (
 			<form className='checkResponseForm'>
@@ -36,7 +36,7 @@ var ChoiceResponseForm = React.createClass({
 });
 
 var LocaleForm = React.createClass({
-	render: function(){
+	render: function() {
 		return (
 			<form className='localeForm'>
 				<input type='text' name='name' ref='name' placeholder='name' />
@@ -54,10 +54,8 @@ var LocaleForm = React.createClass({
 });
 
 var NeighborhoodRecommendationForm = React.createClass({
-	render: function(){
-		var hoods = this.state.hoods.map(function(hood){
-			return <LocaleForm neighborhood={hood} />
-		});
+	render: function() {
+		var hoods = [];
 		return (
 			<div className='hoodRecForm'>
 				<ChoiceResponseForm choiceType='checkbox' choices={NEIGHBORHOODS} />
@@ -68,9 +66,12 @@ var NeighborhoodRecommendationForm = React.createClass({
 });
 
 var Question = React.createClass({
-	render: function(){
+	render: function() {
+		var className = 'question ' + this.props.placement;
 		var responseForm = null;
-		if (this.props.type === 'free') {
+		if (this.props.type === 'user') {
+			responseForm = <UserForm />
+		} else if (this.props.type === 'free') {
 			responseForm = <FreeResponseForm />
 		} else if (this.props.type === 'check') {
 			responseForm = <ChoiceResponseForm choiceType='checkbox' choices={this.props.choices} />
@@ -78,9 +79,11 @@ var Question = React.createClass({
 			responseForm = <ChoiceResponseForm choiceType='radio' choices={this.props.choices} />
 		} else if (this.props.type === 'locale') {
 			responseForm = <LocaleForm />
+		} else if (this.props.type === 'neighborhood') {
+			responseForm = <NeighborhoodRecommendationForm />
 		};
 		return (
-			<div className='question' id={this.props.id}>
+			<div className={className} id={this.props.id}>
 				<h3>{this.props.body}</h3>
 				{responseForm}
 			</div>
@@ -88,26 +91,59 @@ var Question = React.createClass({
 	}
 });
 
+var ProgressButton = React.createClass({
+	progress: function(){
+		this.props.changeQuestion(this.props.direction);
+	},
+	render: function() {
+		return (
+			<button className={this.props.direction} disabled={this.props.noMoreQuestions} onClick={this.progress}>
+				{this.props.direction}
+			</button>
+		)
+	}
+});
+
 var QuestionContainer = React.createClass({
-	render: function(){
+	changeQuestion: function(direction){
+		var questionNumber = this.props.currentQuestion;
+		direction === 'prev' ? questionNumber-- : questionNumber++;
+		this.props.changeQuestion(questionNumber);
+	},
+	render: function() {
+		var currentQuestion = this.props.currentQuestion;
+		var placement = '';
 		var questions = [];
 		this.props.questions.forEach(function(question){
-			questions.push(<Question id={question.id} type={question.type} body={question.body} choices={question.choices ? question.choices : null} />)
+			placement = question.id === currentQuestion ? 'current' : (question.id < currentQuestion ? 'prev' : 'next');
+			questions.push(<Question key={question.id} id={question.id} type={question.type} body={question.body} choices={question.choices ? question.choices : null} placement={placement} />)
 		});
+		var morePrevQuestions = this.props.currentQuestion > 0;
+		var moreNextQuestions = this.props.currentQuestion < questions.length - 1;
 		return (
 			<div className='questionContainer'>
 				{questions}
+				<div className='progressButtons'>
+					<ProgressButton direction='prev' changeQuestion={this.changeQuestion} noMoreQuestions={!morePrevQuestions} />
+					<ProgressButton direction='next' changeQuestion={this.changeQuestion} noMoreQuestions={!moreNextQuestions} />
+				</div>
 			</div>
 		);
 	}
 });
 
 var Survey = React.createClass({
-	render: function(){
+	getInitialState: function(){
+		return {currentQuestion: 0}
+	},
+	updateCurrentQuestion: function(questionNumber){
+		this.setState({currentQuestion: questionNumber});
+	},
+	render: function() {
 		return (
 			<div className='survey'>
 				<h1>Survey</h1>
-				<QuestionContainer questions={this.props.questions}/>
+				<QuestionContainer questions={this.props.questions} currentQuestion={this.state.currentQuestion} changeQuestion={this.updateCurrentQuestion} />
 			</div>
 		);
 	}
@@ -151,6 +187,11 @@ var NEIGHBORHOODS = [
 ];
 
 var SURVEY_QUESTIONS = [
+	{
+		id: 0,
+		type: 'user',
+		body: 'Who are you?'
+	},
 	{
 		id: 1,
 		type: 'free',

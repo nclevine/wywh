@@ -32,10 +32,10 @@ var ChoiceResponseForm = React.createClass({
 	render: function render() {
 		var choiceType = this.props.choiceType;
 		var choices = [];
-		this.props.choices.forEach(function (choice) {
+		this.props.choices.forEach(function (choice, i) {
 			choices.push(React.createElement(
 				'label',
-				null,
+				{ key: i },
 				choice,
 				React.createElement('input', { type: choiceType, name: 'choice' })
 			));
@@ -68,12 +68,29 @@ var LocaleForm = React.createClass({
 	}
 });
 
+var NeighborhoodRecommendationForm = React.createClass({
+	displayName: 'NeighborhoodRecommendationForm',
+
+	render: function render() {
+		var hoods = [];
+		return React.createElement(
+			'div',
+			{ className: 'hoodRecForm' },
+			React.createElement(ChoiceResponseForm, { choiceType: 'checkbox', choices: NEIGHBORHOODS }),
+			hoods
+		);
+	}
+});
+
 var Question = React.createClass({
 	displayName: 'Question',
 
 	render: function render() {
+		var className = 'question ' + this.props.placement;
 		var responseForm = null;
-		if (this.props.type === 'free') {
+		if (this.props.type === 'user') {
+			responseForm = React.createElement(UserForm, null);
+		} else if (this.props.type === 'free') {
 			responseForm = React.createElement(FreeResponseForm, null);
 		} else if (this.props.type === 'check') {
 			responseForm = React.createElement(ChoiceResponseForm, { choiceType: 'checkbox', choices: this.props.choices });
@@ -81,10 +98,12 @@ var Question = React.createClass({
 			responseForm = React.createElement(ChoiceResponseForm, { choiceType: 'radio', choices: this.props.choices });
 		} else if (this.props.type === 'locale') {
 			responseForm = React.createElement(LocaleForm, null);
+		} else if (this.props.type === 'neighborhood') {
+			responseForm = React.createElement(NeighborhoodRecommendationForm, null);
 		};
 		return React.createElement(
 			'div',
-			{ className: 'question', id: this.props.id },
+			{ className: className, id: this.props.id },
 			React.createElement(
 				'h3',
 				null,
@@ -95,18 +114,49 @@ var Question = React.createClass({
 	}
 });
 
+var ProgressButton = React.createClass({
+	displayName: 'ProgressButton',
+
+	progress: function progress() {
+		this.props.changeQuestion(this.props.direction);
+	},
+	render: function render() {
+		return React.createElement(
+			'button',
+			{ className: this.props.direction, disabled: this.props.noMoreQuestions, onClick: this.progress },
+			this.props.direction
+		);
+	}
+});
+
 var QuestionContainer = React.createClass({
 	displayName: 'QuestionContainer',
 
+	changeQuestion: function changeQuestion(direction) {
+		var questionNumber = this.props.currentQuestion;
+		direction === 'prev' ? questionNumber-- : questionNumber++;
+		this.props.changeQuestion(questionNumber);
+	},
 	render: function render() {
+		var currentQuestion = this.props.currentQuestion;
+		var placement = '';
 		var questions = [];
 		this.props.questions.forEach(function (question) {
-			questions.push(React.createElement(Question, { id: question.id, type: question.type, body: question.body, choices: question.choices ? question.choices : null }));
+			placement = question.id === currentQuestion ? 'current' : question.id < currentQuestion ? 'prev' : 'next';
+			questions.push(React.createElement(Question, { key: question.id, id: question.id, type: question.type, body: question.body, choices: question.choices ? question.choices : null, placement: placement }));
 		});
+		var morePrevQuestions = this.props.currentQuestion > 0;
+		var moreNextQuestions = this.props.currentQuestion < questions.length - 1;
 		return React.createElement(
 			'div',
 			{ className: 'questionContainer' },
-			questions
+			questions,
+			React.createElement(
+				'div',
+				{ className: 'progressButtons' },
+				React.createElement(ProgressButton, { direction: 'prev', changeQuestion: this.changeQuestion, noMoreQuestions: !morePrevQuestions }),
+				React.createElement(ProgressButton, { direction: 'next', changeQuestion: this.changeQuestion, noMoreQuestions: !moreNextQuestions })
+			)
 		);
 	}
 });
@@ -114,6 +164,12 @@ var QuestionContainer = React.createClass({
 var Survey = React.createClass({
 	displayName: 'Survey',
 
+	getInitialState: function getInitialState() {
+		return { currentQuestion: 0 };
+	},
+	updateCurrentQuestion: function updateCurrentQuestion(questionNumber) {
+		this.setState({ currentQuestion: questionNumber });
+	},
 	render: function render() {
 		return React.createElement(
 			'div',
@@ -123,7 +179,7 @@ var Survey = React.createClass({
 				null,
 				'Survey'
 			),
-			React.createElement(QuestionContainer, { questions: this.props.questions })
+			React.createElement(QuestionContainer, { questions: this.props.questions, currentQuestion: this.state.currentQuestion, changeQuestion: this.updateCurrentQuestion })
 		);
 	}
 });
@@ -131,6 +187,10 @@ var Survey = React.createClass({
 var NEIGHBORHOODS = ['Atwater Village', 'Beverly Hills', 'Brentwood', 'Burbank', 'Century City', 'Chinatown', 'Culver City', 'Downtown', 'Echo Park', 'Glendale', 'Griffith Park', 'Hermosa Beach', 'Hollywood', 'Koreatown', 'Larchmont', 'Little Tokyo', 'Los Feliz', 'Malibu', 'Manhattan Beach', 'Marina Del Rey', 'Melrose/Fairfax', 'Mid Wilshire', 'Miracle Mile', 'North Hollywood', 'Pasadena', 'Santa Monica', 'Silver Lake', 'Sunset', 'Thai Town', 'The Valley', 'Venice', 'West Hollywood', 'Westwood', 'Woodland Hills'];
 
 var SURVEY_QUESTIONS = [{
+	id: 0,
+	type: 'user',
+	body: 'Who are you?'
+}, {
 	id: 1,
 	type: 'free',
 	body: 'What are some common obstacles you encounter when trying to go out?'
