@@ -1,10 +1,16 @@
 var UserForm = React.createClass({
 	render: function() {
 		return (
-			<form className='userForm'>
-				<input type='text' name='name' ref='name' placeholder='name' />
-				<input type='text' name='age' ref='age' placeholder='age' />
-				<input type='email' name='email' ref='email' placeholder='email' />
+			<form className='user-form'>
+				<label>Name
+					<input type='text' name='name' ref='name' placeholder='name' />
+				</label>
+				<label>Age
+					<input type='text' name='age' ref='age' placeholder='age' />
+				</label>
+				<label>Email
+					<input type='email' name='email' ref='email' placeholder='email' />
+				</label>
 			</form>
 		);
 	}
@@ -13,7 +19,7 @@ var UserForm = React.createClass({
 var FreeResponseForm = React.createClass({
 	render: function() {
 		return (
-			<form className='freeResponseForm'>
+			<form className='free-response-form'>
 				<textarea name='response' ref='response' />
 			</form>
 		);
@@ -24,11 +30,29 @@ var ChoiceResponseForm = React.createClass({
 	render: function() {
 		var choiceType = this.props.choiceType;
 		var choices = [];
-		this.props.choices.forEach(function(choice, i){
-			choices.push(<label key={i}>{choice}<input type={choiceType} name='choice' /></label>);
-		});
+		var columns = false;
+		var className = 'check-response-form';
+		if (this.props.choices.length > 10) {
+			columns = true;
+			className += ' columns';
+			var columnLength = this.props.choices.length / 2;
+			var leftColumn = [];
+			var rightColumn = [];
+			this.props.choices.forEach(function(choice, i){
+				if (i < columnLength) {
+					leftColumn.push(<label key={i}>{choice}<input type={choiceType} name='choice' value={choice} /></label>);
+				} else {
+					rightColumn.push(<label key={i}>{choice}<input type={choiceType} name='choice' value={choice} /></label>);
+				}
+			});
+			choices.push(<div className='left-choices'>{leftColumn}</div>, <div className='right-choices'>{rightColumn}</div>);
+		} else {
+			this.props.choices.forEach(function(choice, i){
+				choices.push(<label key={i}>{choice}<input type={choiceType} name='choice' value={choice} /></label>);
+			});
+		}
 		return (
-			<form className='checkResponseForm'>
+			<form className={className}>
 				{choices}
 			</form>
 		);
@@ -38,16 +62,50 @@ var ChoiceResponseForm = React.createClass({
 var LocaleForm = React.createClass({
 	render: function() {
 		return (
-			<form className='localeForm'>
-				<input type='text' name='name' ref='name' placeholder='name' />
-				<input type='text' name='location' ref='location' placeholder='location' />
-				<input type='text' name='vibe' ref='vibe' placeholder='vibe (one word)' />
-				<input type='text' name='category' ref='category' placeholder='category' />
-				<input type='text' name='occasion' ref='occasion' placeholder='occasion' />
-				<input type='text' name='bestTime' ref='bestTime' placeholder='best time to visit' />
-				<input type='text' name='price' ref='price' placeholder='price' />
-				<input type='text' name='classiness' ref='classiness' placeholder='classiness' />
-				<input textarea='text' name='similar' ref='similar' placeholder='similar places' />
+			<form className='locale-form'>
+				<label>Name
+					<input type='text' name='name' ref='name' placeholder='name' />
+				</label>
+				<label>Location
+					<input type='text' name='location' ref='location' placeholder='location' />
+				</label>
+				<label>Vibe
+					<input type='text' name='vibe' ref='vibe' placeholder='vibe (one word)' />
+				</label>
+				<label>Category
+					<input type='text' name='category' ref='category' placeholder='category' />
+				</label>
+				<label>Occasion
+					<input type='text' name='occasion' ref='occasion' placeholder='occasion' />
+				</label>
+				<label>Best time to visit
+					<input type='text' name='bestTime' ref='bestTime' placeholder='best time to visit' />
+				</label>
+				<label>Price range
+					<label>$
+						<input type='radio' name='price' ref='price1' />
+					</label>
+					<label>$$
+						<input type='radio' name='price' ref='price2' />
+					</label>
+					<label>$$$
+						<input type='radio' name='price' ref='price3' />
+					</label>
+				</label>
+				<label>Classiness range
+					<label>★
+						<input type='radio' name='classiness' ref='price1' />
+					</label>
+					<label>★★
+						<input type='radio' name='classiness' ref='price2' />
+					</label>
+					<label>★★★
+						<input type='radio' name='classiness' ref='price3' />
+					</label>
+				</label>
+				<label>Similar places
+					<textarea name='similar' ref='similar' placeholder='similar places' />
+				</label>
 			</form>
 		);
 	}
@@ -57,7 +115,7 @@ var NeighborhoodRecommendationForm = React.createClass({
 	render: function() {
 		var hoods = [];
 		return (
-			<div className='hoodRecForm'>
+			<div className='hood-rec-form'>
 				<ChoiceResponseForm choiceType='checkbox' choices={NEIGHBORHOODS} />
 				{hoods}
 			</div>
@@ -85,6 +143,7 @@ var Question = React.createClass({
 		return (
 			<div className={className} id={this.props.id}>
 				<h3>{this.props.body}</h3>
+				<p className='question-instructions'>{this.props.instructions}</p>
 				{responseForm}
 			</div>
 		);
@@ -96,8 +155,12 @@ var ProgressButton = React.createClass({
 		this.props.changeQuestion(this.props.direction);
 	},
 	render: function() {
+		var className = this.props.direction;
+		if (this.props.noMoreQuestions) {
+			className += ' hidden'
+		};
 		return (
-			<button className={this.props.direction} disabled={this.props.noMoreQuestions} onClick={this.progress}>
+			<button className={className} onClick={this.progress}>
 				{this.props.direction}
 			</button>
 		)
@@ -116,17 +179,17 @@ var QuestionContainer = React.createClass({
 		var questions = [];
 		this.props.questions.forEach(function(question){
 			placement = question.id === currentQuestion ? 'current' : (question.id < currentQuestion ? 'prev' : 'next');
-			questions.push(<Question key={question.id} id={question.id} type={question.type} body={question.body} choices={question.choices ? question.choices : null} placement={placement} />)
+			questions.push(<Question key={question.id} id={question.id} type={question.type} body={question.body} instructions={question.instructions ? question.instructions : null} choices={question.choices ? question.choices : null} placement={placement} />)
 		});
 		var morePrevQuestions = this.props.currentQuestion > 0;
 		var moreNextQuestions = this.props.currentQuestion < questions.length - 1;
 		return (
-			<div className='questionContainer'>
-				{questions}
-				<div className='progressButtons'>
+			<div className='question-container'>
+				<div className='progress-buttons'>
 					<ProgressButton direction='prev' changeQuestion={this.changeQuestion} noMoreQuestions={!morePrevQuestions} />
 					<ProgressButton direction='next' changeQuestion={this.changeQuestion} noMoreQuestions={!moreNextQuestions} />
 				</div>
+				{questions}
 			</div>
 		);
 	}
@@ -216,6 +279,7 @@ var SURVEY_QUESTIONS = [
 		id: 5,
 		type: 'check',
 		body: 'What are some of your common going-out goals/scenarios?',
+		instructions: 'Pick as many as you like.',
 		choices: [
 			'fun with friends',
 			'getting inebriated',
@@ -266,6 +330,7 @@ var SURVEY_QUESTIONS = [
 		id: 9,
 		type: 'neighborhood',
 		body: 'What neighborhoods do you prefer for nighttime activities?',
+		instructions: 'Select as many as you like, then use the forms to describe locales in those neighborhoods.',
 		choices: NEIGHBORHOODS
 	},
 	{
@@ -290,6 +355,7 @@ var SURVEY_QUESTIONS = [
 		id: 12,
 		type: 'neighborhood',
 		body: 'What neighborhoods do you prefer for daytime activities?',
+		instructions: 'Select as many as you like, then use the forms to describe locales in those neighborhoods.',
 		choices: NEIGHBORHOODS
 	},
 	{
@@ -309,6 +375,7 @@ var SURVEY_QUESTIONS = [
 		id: 14,
 		type: 'neighborhood',
 		body: 'What neighborhoods do you prefer for outdoor activities?',
+		instructions: 'Select as many as you like, then use the forms to describe locales in those neighborhoods.',
 		choices: NEIGHBORHOODS
 	},
 	{
