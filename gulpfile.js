@@ -18,6 +18,7 @@ var production = process.env.NODE_ENV === 'production';
 var dependencies = [
   'alt',
   'react',
+  'react-dom',
   'react-router',
   'underscore'
 ];
@@ -30,9 +31,6 @@ var dependencies = [
 gulp.task('vendor', function() {
   return gulp.src([
     'bower_components/jquery/dist/jquery.js',
-    'bower_components/bootstrap/dist/js/bootstrap.js',
-    'bower_components/magnific-popup/dist/jquery.magnific-popup.js',
-    'bower_components/toastr/toastr.js'
   ]).pipe(concat('vendor.js'))
     .pipe(gulpif(production, uglify({ mangle: false })))
     .pipe(gulp.dest('public/js'));
@@ -95,7 +93,7 @@ gulp.task('browserify-watch', ['browserify-vendor'], function() {
 
 /*
  |--------------------------------------------------------------------------
- | Compile LESS stylesheets.
+ | Compile Sass stylesheets.
  |--------------------------------------------------------------------------
  */
 gulp.task('styles', function() {
