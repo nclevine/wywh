@@ -1,0 +1,25 @@
+{
+  "name": "wywh-survey",
+  "version": "0.0.0",
+  "homepage": "https://github.com/nclevine/wywh",
+  "description": "seed data survey for wywh app",
+  "main": "server.js",
+  "moduleType": [
+    "globals"
+  ],
+  "authors": [
+    "noah levine"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4"
+  }
+}
